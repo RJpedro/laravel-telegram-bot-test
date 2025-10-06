@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Repositories\WebhookRepository;
+use App\Services\WebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class WebhookController extends Controller
 {
-    protected $repository;
+    protected $webhookService;
 
-    public function __construct(WebhookRepository $repository)
+    public function __construct(WebhookService $webhookService)
     {
-        $this->repository = $repository;
+        $this->webhookService = $webhookService;
     }
 
     public function handleRefund(Request $request): JsonResponse
     {
-        $order = $this->repository->handleRefund($request->all());
+        $order = $this->webhookService->handleRefund($request->all());
         return response()->json([
             'message' => 'Webhook de estorno processado com sucesso.',
             'order' => $order
@@ -27,7 +26,7 @@ class WebhookController extends Controller
 
     public function handlePayment(Request $request): JsonResponse
     {
-        $order = $this->repository->handlePayment($request->all());
+        $order = $this->webhookService->handlePayment($request->all());
         return response()->json([
             'message' => 'Webhook de pagamento com sucesso.',
             'order' => $order

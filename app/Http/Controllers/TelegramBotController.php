@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Repositories\TelegramBotRepository;
+use App\Services\TelegramBotService;
 
 class TelegramBotController extends Controller
 {
-    protected $repository;
+    protected $telegramBotService;
 
-    public function __construct(TelegramBotRepository $repository)
+    public function __construct(TelegramBotService $telegramBotService)
     {
-        $this->repository = $repository;
+        $this->telegramBotService = $telegramBotService;
     }
 
     /**
@@ -41,10 +41,10 @@ class TelegramBotController extends Controller
             $chatId = $update['callback_query']['message']['chat']['id'];
         }
 
-        if ($text == '/start') return $this->repository->handleStart($chatId);
-        if ($text == '/reembolso') return $this->repository->handleRefund($chatId);
-        if ($text == '/assinatura') return $this->repository->handlePlan($chatId);
-        if ($text == '/menu') return $this->repository->handleMenu($chatId);
-        if (str_contains($text, 'select_plan')) return $this->repository->planSubscriber($update);
+        if ($text == '/start') return $this->telegramBotService->handleStart($chatId);
+        if ($text == '/reembolso') return $this->telegramBotService->handleRefund($chatId);
+        if ($text == '/assinatura') return $this->telegramBotService->handlePlan($chatId);
+        if ($text == '/menu') return $this->telegramBotService->handleMenu($chatId);
+        if (str_contains($text, 'select_plan')) return $this->telegramBotService->planSubscriber($update);
     }
 }

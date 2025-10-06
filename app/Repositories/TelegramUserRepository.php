@@ -34,4 +34,9 @@ class TelegramUserRepository
 
         return $user;
     }
+
+    public function returnUserData(int $chatId): ?TelegramUser
+    {
+        return TelegramUser::where('telegram_id', $chatId)->first();
+    }
 }

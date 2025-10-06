@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Plan;
 use App\Models\Subscription;
 
 class SubscriptionRepository
@@ -55,5 +56,28 @@ class SubscriptionRepository
                            ->where('status', 'active')
                            ->with('plan')
                            ->first();
+    }
+
+
+    /**
+     * Atualiza assinatura para 'refunded'
+     */
+    public function updateSubscriptionStatusToRefunded(array $request): Subscription
+    {
+        $subscription = Subscription::findOrFail($request['data']['subscription_id']);
+        $subscription->update(['status' => 'refunded']);
+
+        return $subscription;
+    }
+
+    public function activateSubscription(Subscription $subscription, Plan $plan)
+    {
+        $subscription->update([
+            'status' => 'active',
+            'start_date' => now(),
+            'end_date' => now()->addDays($plan->duration_days),
+        ]);
+
+        return $subscription;
     }
 }

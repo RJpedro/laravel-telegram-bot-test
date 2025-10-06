@@ -53,4 +53,12 @@ class PlanRepository
     {
         return $this->model->where('id', $id)->where('active', true)->first();
     }
+
+    /**
+     * Buscar plano por id
+     */
+    public function findPlanById(int $id): ?Plan
+    {
+        return $this->model->where('id', $id)->first();
+    }
 }

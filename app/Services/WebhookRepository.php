@@ -66,8 +66,6 @@ class WebhookRepository
     {
         $plan = $subscription->plan;
 
-        Log::info(json_encode(['teste' => $user]));
-
         $firstName = $user->first_name;
         $planName = $plan->name;
         $amount = number_format($plan->amount, 2, ',', '.');

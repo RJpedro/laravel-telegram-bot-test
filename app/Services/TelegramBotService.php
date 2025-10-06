@@ -1,23 +1,27 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Services;
 
 use App\Jobs\CreateSubscriptionJob;
 use App\Jobs\RefundJob;
 use App\Models\Plan;
 use App\Models\TelegramUser;
-use App\Services\TelegramService;
+use App\Repositories\PlanRepository;
+use App\Repositories\TelegramUserRepository;
 use Carbon\Carbon;
 
-class TelegramBotRepository
+class TelegramBotService
 {
     protected TelegramService $telegramService;
     protected TelegramUserRepository $telegramUserRepository;
+    protected PlanRepository $planRepository;
+    
 
-    public function __construct(TelegramService $telegramService, TelegramUserRepository $telegramUserRepository)
+    public function __construct(TelegramService $telegramService, TelegramUserRepository $telegramUserRepository, PlanRepository $planRepository)
     {
         $this->telegramService = $telegramService;
         $this->telegramUserRepository = $telegramUserRepository;
+        $this->planRepository = $planRepository;
     }
 
     /**
@@ -30,13 +34,13 @@ class TelegramBotRepository
 
     public function handleRefund(int $chatId)
     {
-        $user = $this->returnUserData($chatId);
+        $user = $this->telegramUserRepository->returnUserData($chatId);
 
         if ($user) {
             $subscription = $user->subscription;
 
             if (!$subscription || $subscription->status !== 'active') {
-                return $this->sendWelcomeMessage($chatId);
+                return $this->sendWelcomeMessage($chatId, null);
             }
 
             RefundJob::dispatch($subscription)->delay(now()->addSeconds(4));
@@ -44,12 +48,12 @@ class TelegramBotRepository
             return $this->sendProcessingMessage($chatId);
         }
 
-        return $this->sendWelcomeMessage($chatId);
+        return $this->sendWelcomeMessage($chatId, null);
     }
     
     public function handlePlan(int $chatId)
     {
-        $user = $this->returnUserData($chatId);
+        $user = $this->telegramUserRepository->returnUserData($chatId);
 
         if ($user) {
             $subscription = $user->subscription;
@@ -75,7 +79,7 @@ class TelegramBotRepository
             . "💸 <b>/reembolso</b> → Solicitar um reembolso\n"
             . "📝 <b>/assinatura</b> → Cadastrar uma nova assinatura\n"
             . "🚀 <b>/start</b> → Ver opções de assinatura e menu principal\n\n"
-            . "_Escolha uma das opções acima para continuar._";
+            . "Escolha uma das opções acima para continuar.";
 
         return $this->telegramService->sendMessage(
             $chatId,
@@ -88,13 +92,13 @@ class TelegramBotRepository
         $chatId = $request['callback_query']['message']['chat']['id'];
         $this->sendProcessingMessage($chatId, 'processando seu pedido');
 
-        $user = $this->returnUserData($chatId);
+        $user = $this->telegramUserRepository->returnUserData($chatId);
         $subscription = $user?->subscription;
             
         if (!$subscription || $subscription->status !== 'active') {
             $user = $this->maybeCreateUser($request);
-            $plan = Plan::where('id', str_replace('select_plan_', '', $request['callback_query']['data']))->first();
-        
+            $plan = $this->planRepository->findPlanById((int) str_replace('select_plan_', '', $request['callback_query']['data']));
+
             return CreateSubscriptionJob::dispatch($user->telegram_id, $plan->id)->delay(now()->addSeconds(4));
         }
         
@@ -103,7 +107,7 @@ class TelegramBotRepository
 
     protected function verifyUser(int $chatId)
     {
-        $user = $this->returnUserData($chatId);
+        $user = $this->telegramUserRepository->returnUserData($chatId);
 
         if (!$user || !$user->subscription || $user->subscription->status !== 'active') {
             return $this->sendWelcomeMessage($chatId, $user?->first_name);
@@ -112,16 +116,12 @@ class TelegramBotRepository
         return $this->sendActiveSubscriptionMessage($chatId);
     }
 
-    protected function returnUserData(int $chatId): ?TelegramUser
-    {
-        return TelegramUser::where('telegram_id', $chatId)->first();
-    }
     
     protected function maybeCreateUser($request): TelegramUser
     {
         $chatId = (int) $request['callback_query']['message']['chat']['id'];
 
-        $user = $this->returnUserData($chatId);
+        $user = $this->telegramUserRepository->returnUserData($chatId);
 
         $last_name = isset($request['callback_query']['message']['chat']['last_name']) ?  $request['callback_query']['message']['chat']['last_name'] : '';
 
@@ -147,7 +147,7 @@ class TelegramBotRepository
     // ✅ Mensagens padrão
     // ======================
 
-    protected function sendWelcomeMessage(int $chatId, string $name = null): void
+    protected function sendWelcomeMessage(int $chatId, ?string $name): void
     {
         $text = $name
             ? "Olá {$name}! Você ainda não é assinante.\nEscolha uma opção:"
@@ -167,7 +167,7 @@ class TelegramBotRepository
 
     protected function sendActiveSubscriptionMessage(int $chatId): void
     {
-        $user = $this->returnUserData($chatId);
+        $user = $this->telegramUserRepository->returnUserData($chatId);
         $subscription = $user->subscription;
         $plan = $subscription->plan;
 
