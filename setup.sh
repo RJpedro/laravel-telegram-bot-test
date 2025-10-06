@@ -28,23 +28,41 @@ else
 fi
 
 # ==============================
-# 🧩 Instalação do Docker Compose
+# 🧩 Verificação do Docker Compose
 # ==============================
 echo "🔍 Verificando Docker Compose..."
-if ! command -v docker-compose &> /dev/null; then
-  echo "⚙️  Instalando Docker Compose..."
+
+# Função para detectar o comando Compose
+detect_compose_command() {
+  if docker compose version &> /dev/null; then
+    echo "docker compose"
+  elif docker-compose version &> /dev/null; then
+    echo "docker-compose"
+  else
+    echo ""
+  fi
+}
+
+COMPOSE_CMD=$(detect_compose_command)
+
+if [ -z "$COMPOSE_CMD" ]; then
+  echo "⚙️  Nenhum comando Compose encontrado. Instalando Docker Compose..."
   sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
+  COMPOSE_CMD="docker-compose"
   echo "✅ Docker Compose instalado com sucesso!"
 else
-  echo "✅ Docker Compose já está instalado."
+  echo "✅ Comando Docker Compose detectado: '$COMPOSE_CMD'"
 fi
 
 # =============================
-# 🚀 Subindo containers do projeto
+# 🚀 Build e subida dos containers
 # =============================
-echo "🚀 Subindo containers com Docker Compose..."
-docker-compose up -d
+echo "🧹 Limpando cache de build e reconstruindo containers..."
+$COMPOSE_CMD build --no-cache
+
+echo "🚀 Subindo containers com $COMPOSE_CMD..."
+$COMPOSE_CMD up -d
 
 echo "⏳ Aguardando container PHP iniciar..."
 sleep 5
@@ -69,7 +87,7 @@ docker exec "$PHP_CONTAINER" bash -c "
     chmod -R 777 /var/www/html/bootstrap/cache
 "
 
-echo "✅ Node.js + npm instalados com sucesso dentro do container!"
+echo "✅ Extensões PHP instaladas e permissões ajustadas!"
 
 # =============================
 # 📦 Instalando Composer se não existir
