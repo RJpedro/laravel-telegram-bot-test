@@ -123,11 +123,13 @@ class TelegramBotRepository
 
         $user = $this->returnUserData($chatId);
 
+        $last_name = isset($request['callback_query']['message']['chat']['last_name']) ?  $request['callback_query']['message']['chat']['last_name'] : '';
+
         if (!$user) {
             $user = $this->telegramUserRepository->createOrUpdate([
                 'telegram_id' => $chatId,
                 'first_name' => $request['callback_query']['message']['chat']['first_name'],
-                'username' => $request['callback_query']['message']['chat']['first_name'] . ' ' . $request['callback_query']['message']['chat']['last_name']
+                'username' => $request['callback_query']['message']['chat']['first_name'] . ' ' . $last_name
             ]);
         }   
 
