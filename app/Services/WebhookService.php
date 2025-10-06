@@ -2,13 +2,9 @@
 
 namespace App\Services;
 
-use App\Jobs\CreateSubscriptionJob;
-use App\Jobs\RefundJob;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Models\TelegramUser;
 use App\Repositories\PaymentRepository;
-use App\Repositories\PlanRepository;
 use App\Repositories\SubscriptionRepository;
 use App\Repositories\TelegramUserRepository;
 use Carbon\Carbon;
