@@ -99,3 +99,15 @@ php artisan queue:work
 🔹 O comando queue:work ficará rodando, processando as filas em tempo real.
 
 🔹 Para parar o worker, pressione CTRL + C.
+
+# Melhorias Futuras
+
+O projeto está funcional, mas algumas melhorias podem ser implementadas para torná-lo mais robusto e flexível:
+
+- Criação de Orders: introduzir uma entidade Order como intermediária entre Payments e Refunds, permitindo uma estrutura polimórfica e melhor organização das transações.
+
+- Assinaturas múltiplas: permitir que um usuário adquira mais de uma assinatura simultaneamente.
+
+- Pagamentos fracionados por assinatura: possibilitar que uma assinatura seja paga através de múltiplos pagamentos (ex.: metade no crédito, metade no débito).
+
+- Estornos múltiplos por pagamento: permitir que um pagamento tenha um ou mais estornos, aumentando a flexibilidade para ajustes financeiros.
